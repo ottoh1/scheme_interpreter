@@ -1,0 +1,11 @@
+# compiled output
+scheme
+*.o
+*.a
+
+# debug
+vgcore.*
+core
+
+# editor
+.vscode/
