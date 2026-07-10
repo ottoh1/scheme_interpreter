@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
 
             expected[strcspn(expected, "\n")] = '\0'; // remove newline characters
 
-            TokenArray tokens = tokenize(line);
-            Nest *nest_ptr = parse(&tokens);
+            TokenArray *tokens = tokenize(line);
+            Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr);
 
             test_num++;
@@ -44,6 +44,9 @@ int main(int argc, char *argv[]) {
                 printf("expected: %s\n", expected);
                 printf("actual: %s\n", result->str);
             }
+            free_nest(nest_ptr); // free nest first, since it points into tokens
+            free_token_arr(tokens);
+            free_token(result);
         }
 
         printf("Passed: %d\n", passed);
@@ -60,10 +63,13 @@ int main(int argc, char *argv[]) {
         char line[MAX_LENGTH];
         while (fgets(line, sizeof(line), f)) {
             if (line[0] == ';' || line[0] == '\n') continue;
-            TokenArray tokens = tokenize(line);
-            Nest *nest_ptr = parse(&tokens);
+            TokenArray *tokens = tokenize(line);
+            Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr);
             printf("%s\n", result->str);
+            free_nest(nest_ptr); // free nest first, since it points into tokens
+            free_token_arr(tokens);
+            free_token(result);
         }
         fclose(f);
 
@@ -76,10 +82,13 @@ int main(int argc, char *argv[]) {
                 break;
             }
             if (input[0] == '\n') continue;
-            TokenArray tokens = tokenize(input);
-            Nest *nest_ptr = parse(&tokens);
+            TokenArray *tokens = tokenize(input);
+            Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr);
             printf("%s\n", result->str);
+            free_nest(nest_ptr); // free nest first, since it points into tokens
+            free_token_arr(tokens);
+            free_token(result);
         }
     }
 

@@ -52,6 +52,7 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->data_array->data = realloc(nest->data_array->data, nest->data_array->count * sizeof(Data));
                 nest->data_array->data[nest->data_array->count - 1].nest_ptr = NULL;
                 nest->data_array->data[nest->data_array->count - 1].token = &token_arr->tokens[i];
+                nest->data_array->data[nest->data_array->count - 1].token->new_token = 0;
                 exp_next = DATA_OR_END;
             } else {
                 printf("Did not expect SYM\n");
@@ -63,6 +64,7 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->data_array->data = realloc(nest->data_array->data, nest->data_array->count * sizeof(Data));
                 nest->data_array->data[nest->data_array->count - 1].nest_ptr = NULL;
                 nest->data_array->data[nest->data_array->count - 1].token = &token_arr->tokens[i];
+                nest->data_array->data[nest->data_array->count - 1].token->new_token = 0;
                 exp_next = DATA_OR_END;
             } else {
                 printf("Did not expect NUM\n");

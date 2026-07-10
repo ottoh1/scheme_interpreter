@@ -15,6 +15,7 @@ typedef enum {
 typedef struct {
     TokenType type;
     char *str;
+    int new_token; // 1 = malloc'd sperately. 0 = points into token array
 } Token;
 
 typedef struct {
@@ -22,7 +23,7 @@ typedef struct {
     size_t count;
 } TokenArray;
 
-TokenArray tokenize(const char *input);
+TokenArray *tokenize(const char *input);
 
 // parser
 
@@ -48,17 +49,21 @@ struct DataArray {
 };
 
 struct Nest {
-    size_t relative_pos;
     Token *op_symb;
     DataArray *data_array;
     size_t tokens_covered;
 };
 
 
-Nest* parse(const TokenArray *input);
+Nest* parse(const TokenArray *token_arr);
 
 // eval
 
 Token* evaluate(Nest *nest);
+
+// free
+void free_token(Token *token);
+void free_token_arr(TokenArray *token_arr);
+void free_nest(Nest *nest);
 
 #endif

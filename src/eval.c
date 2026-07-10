@@ -18,28 +18,31 @@ Token * evaluate(Nest *nest) {
     for (size_t i = 0; i < nest->data_array->count; i++) {
         if (nest->data_array->data[i].nest_ptr != NULL) {
             nest->data_array->data[i].token = evaluate(nest->data_array->data[i].nest_ptr);
+            nest->data_array->data[i].token->new_token = 1;
+
         }
     }
 
     char *return_str = malloc(64 * sizeof(char));
     Token *return_token = malloc(sizeof(Token));
+    return_token->new_token = 1;
 
     if (str_in(nest->op_symb->str, arithmetic_ops, 4) != 0) { // ARITHMETIC
         float result;
 
         for (size_t i = 0; i < nest->data_array->count; i++) {
             if (i == 0) {
-                result = (float) atof(nest->data_array->data[i].token->str);
+                result = (float) atoi(nest->data_array->data[i].token->str);
                 continue;
             }
             if (strcmp(nest->op_symb->str, "+") == 0) {
-                result = (float) result + atof(nest->data_array->data[i].token->str);
+                result = (float) result + atoi(nest->data_array->data[i].token->str);
             } else if (strcmp(nest->op_symb->str, "-") == 0) {
-                result = (float) result - atof(nest->data_array->data[i].token->str);
+                result = (float) result - atoi(nest->data_array->data[i].token->str);
             } else if (strcmp(nest->op_symb->str, "*") == 0) {
-                result = (float) result * atof(nest->data_array->data[i].token->str);
+                result = (float) result * atoi(nest->data_array->data[i].token->str);
             } else if (strcmp(nest->op_symb->str, "/") == 0) {
-                result = (float) result / atof(nest->data_array->data[i].token->str);
+                result = (float) result / atoi(nest->data_array->data[i].token->str);
             }
         }
 
