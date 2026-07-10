@@ -28,8 +28,12 @@ Nest *parse(const TokenArray *token_arr) {
                 remaining_arr->count = count - i;
                 Nest *inner_nest = parse(remaining_arr);
                 free(remaining_arr);
+
+
                 nest->data_array->count++;
+                nest->data_array->data = realloc(nest->data_array->data, nest->data_array->count * sizeof(Data));
                 nest->data_array->data[nest->data_array->count - 1].nest_ptr = inner_nest;
+                nest->data_array->data[nest->data_array->count - 1].token = NULL;
 
                 nest->tokens_covered += inner_nest->tokens_covered;
                 i += inner_nest->tokens_covered;
@@ -45,6 +49,8 @@ Nest *parse(const TokenArray *token_arr) {
                 exp_next = DATA;
             } else if (exp_next == DATA || exp_next == DATA_OR_END) {
                 nest->data_array->count++;
+                nest->data_array->data = realloc(nest->data_array->data, nest->data_array->count * sizeof(Data));
+                nest->data_array->data[nest->data_array->count - 1].nest_ptr = NULL;
                 nest->data_array->data[nest->data_array->count - 1].token = &token_arr->tokens[i];
                 exp_next = DATA_OR_END;
             } else {
