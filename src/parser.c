@@ -46,7 +46,7 @@ Nest *parse(const TokenArray *token_arr) {
         } else if (token.type == SYM) {
             if (exp_next == OP) {
                 nest->op_symb = &token_arr->tokens[i];
-                exp_next = DATA;
+                exp_next = DATA_OR_END;
             } else if (exp_next == DATA || exp_next == DATA_OR_END) {
                 nest->data_array->count++;
                 nest->data_array->data = realloc(nest->data_array->data, nest->data_array->count * sizeof(Data));
@@ -54,6 +54,9 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->data_array->data[nest->data_array->count - 1].token = &token_arr->tokens[i];
                 nest->data_array->data[nest->data_array->count - 1].token->new_token = 0;
                 exp_next = DATA_OR_END;
+            } else if (exp_next == START) {
+                nest->op_symb = &token_arr->tokens[i];
+                exp_next = END;
             } else {
                 printf("Did not expect SYM\n");
                 exit(1);
@@ -66,12 +69,15 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->data_array->data[nest->data_array->count - 1].token = &token_arr->tokens[i];
                 nest->data_array->data[nest->data_array->count - 1].token->new_token = 0;
                 exp_next = DATA_OR_END;
+            } else if (exp_next == START || exp_next == OP) {
+                nest->op_symb = &token_arr->tokens[i];
+                exp_next = END;
             } else {
                 printf("Did not expect NUM\n");
                 exit(1);
             }
         } else if (token.type == RPAR) {
-            if (exp_next == DATA_OR_END) {
+            if (exp_next == DATA_OR_END || exp_next == END) {
                 nest->tokens_covered++;
                 return nest;
             } else if (exp_next == START || exp_next == OP || exp_next == DATA) {

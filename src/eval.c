@@ -188,6 +188,29 @@ Token * evaluate(Nest *nest, Environment *env) {
             strcpy(return_str, env->variables[env->count - 1].token->str);
             return_token->type = env->variables[env->count - 1].token->type;
         }
+    } else if (nest->op_symb->type == NUM) {
+        strcpy(return_str, nest->op_symb->str);
+        return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
+        return_token->type = NUM;
+    } else if (nest->op_symb->type == SYM) {
+        char variable_name[64] = {0};
+        strcpy(variable_name, nest->op_symb->str);
+        int found = 0;
+        for (size_t i = 0; i < env->count; i++) {
+            if (strcmp(variable_name, env->variables[i].name) == 0) {
+                found = 1;
+                
+                strcpy(return_str, env->variables[i].token->str);
+                return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
+                return_token->type = env->variables[i].token->type;
+                break;
+            }
+        }
+        if (found == 0) {
+            strcpy(return_str, nest->op_symb->str);
+            return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
+            return_token->type = SYM;
+        }
     } else {
         printf("Uknown OP\n");
         exit(1);

@@ -31,7 +31,8 @@ typedef enum {
     START,
     OP,
     DATA,
-    DATA_OR_END
+    DATA_OR_END,
+    END
 } Arg;
 
 typedef struct Nest Nest;

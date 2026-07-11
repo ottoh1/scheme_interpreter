@@ -59,7 +59,7 @@
 (if (< 1 2) (+ (* 2 2) 1) 9)
 (and (= 1 1) (= 2 2))
 
-; === DEFINE / VARIABLES ===
+; define
 (define x 5)
 (define y 10)
 (+ x y)
@@ -76,3 +76,10 @@
 (* x x)
 (< x y)
 (> x y)
+
+; self-eval and variable lookup
+5
+#t
+#f
+(define z 7)
+z
