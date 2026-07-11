@@ -14,12 +14,29 @@ int str_in(const char *str, const char **list, size_t count) {
     return 0;
 }
 
-Token * evaluate(Nest *nest) {
+Token * evaluate(Nest *nest, Environment *env) {
     for (size_t i = 0; i < nest->data_array->count; i++) {
         if (nest->data_array->data[i].nest_ptr != NULL) {
-            nest->data_array->data[i].token = evaluate(nest->data_array->data[i].nest_ptr);
+            nest->data_array->data[i].token = evaluate(nest->data_array->data[i].nest_ptr, env);
             nest->data_array->data[i].token->new_token = 1;
 
+        }
+    }
+
+    // set variables
+    for (size_t i = 0; i < nest->data_array->count; i++) {
+        if (strcmp(nest->op_symb->str, "define") == 0) {break;}
+        if (nest->data_array->data[i].token->type == SYM) {
+            for (size_t j = 0; j < env->count; j++) {
+                if (strcmp(nest->data_array->data[i].token->str, env->variables[j].name) == 0) {
+                    free_token(nest->data_array->data[i].token);
+                    nest->data_array->data[i].token = malloc(sizeof(Token));
+                    nest->data_array->data[i].token->type = env->variables[j].token->type;
+                    nest->data_array->data[i].token->str = malloc(sizeof(char) * (strlen(env->variables[j].token->str) + 1));
+                    strcpy(nest->data_array->data[i].token->str, env->variables[j].token->str);
+                    nest->data_array->data[i].token->new_token = 1;
+                }
+            }
         }
     }
 
@@ -94,7 +111,7 @@ Token * evaluate(Nest *nest) {
             return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
             return_token->type = SYM;
         }
-    } else if(strcmp(nest->op_symb->str, "if") == 0) { // if statement
+    } else if(strcmp(nest->op_symb->str, "if") == 0) { // IF
         int result;
         if (strcmp(nest->data_array->data[0].token->str, "#t") == 0) {
             result = atoi(nest->data_array->data[1].token->str); // get 2nd element if true
@@ -107,7 +124,7 @@ Token * evaluate(Nest *nest) {
         snprintf(return_str, 64, "%d", result);
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = NUM;
-    } else if(strcmp(nest->op_symb->str, "and") == 0) { // and statement
+    } else if(strcmp(nest->op_symb->str, "and") == 0) { // AND
         if (strcmp(nest->data_array->data[0].token->str, "#t") == 0 && strcmp(nest->data_array->data[1].token->str, "#t") == 0) {
             strcpy(return_str, "#t");
         } else {
@@ -115,7 +132,7 @@ Token * evaluate(Nest *nest) {
         }
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = SYM;
-    } else if(strcmp(nest->op_symb->str, "or") == 0) { // or statement
+    } else if(strcmp(nest->op_symb->str, "or") == 0) { // OR
         if (strcmp(nest->data_array->data[0].token->str, "#t") == 0 || strcmp(nest->data_array->data[1].token->str, "#t") == 0) {
             strcpy(return_str, "#t");
         } else {
@@ -123,7 +140,7 @@ Token * evaluate(Nest *nest) {
         }
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = SYM;
-    } else if(strcmp(nest->op_symb->str, "not") == 0) { // not statement
+    } else if(strcmp(nest->op_symb->str, "not") == 0) { // NOT
         if (strcmp(nest->data_array->data[0].token->str, "#t") == 0) {
             strcpy(return_str, "#f");
         } else if (strcmp(nest->data_array->data[0].token->str, "#f") == 0) {
@@ -131,6 +148,46 @@ Token * evaluate(Nest *nest) {
         }
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = SYM;
+    } else if(strcmp(nest->op_symb->str, "define") == 0) { // DEFINE VARIABLE
+        char variable_name[64] = {0};
+        strcpy(variable_name, nest->data_array->data[0].token->str);
+        int found = 0;
+        for (size_t i = 0; i < env->count; i++) {
+            if (strcmp(variable_name, env->variables[i].name) == 0) {
+                found = 1;
+                if (env->variables[i].token != NULL) {free_token(env->variables[i].token);}
+                env->variables[i].type = TOKEN;
+
+                size_t token_str_len = strlen(nest->data_array->data[1].token->str);
+                env->variables[i].token = malloc(sizeof(Token));
+                env->variables[i].token->new_token = 1;
+                env->variables[i].token->str = malloc(sizeof(char) * (token_str_len + 1));
+                strcpy(env->variables[i].token->str, nest->data_array->data[1].token->str);
+                env->variables[i].token->type = nest->data_array->data[1].token->type;
+                
+                return_str = realloc(return_str, sizeof(char) * (token_str_len + 1));
+                strcpy(return_str, env->variables[i].token->str);
+                return_token->type = env->variables[i].token->type;
+                break;
+            }
+        }
+        if (found == 0) {
+            env->count++;
+            env->variables = realloc(env->variables, env->count * sizeof(Variable));
+            env->variables[env->count - 1].type = TOKEN;
+            env->variables[env->count - 1].name = malloc(sizeof(char) * (strlen(variable_name) + 1));
+            strcpy(env->variables[env->count - 1].name, variable_name);
+            env->variables[env->count - 1].token = malloc(sizeof(Token));
+            env->variables[env->count - 1].token->new_token = 1;
+            size_t token_str_len = strlen(nest->data_array->data[1].token->str);
+            env->variables[env->count - 1].token->str = malloc(sizeof(char) * (token_str_len + 1));
+            strcpy(env->variables[env->count - 1].token->str, nest->data_array->data[1].token->str);
+            env->variables[env->count - 1].token->type = nest->data_array->data[1].token->type;
+
+            return_str = realloc(return_str, sizeof(char) * (token_str_len + 1));
+            strcpy(return_str, env->variables[env->count - 1].token->str);
+            return_token->type = env->variables[env->count - 1].token->type;
+        }
     } else {
         printf("Uknown OP\n");
         exit(1);

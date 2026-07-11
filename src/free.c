@@ -49,3 +49,16 @@ void free_nest(Nest *nest) {
         free(nest);
     }
 }
+
+void free_env(Environment *env) {
+    if (env != NULL) {
+        if (env->variables != NULL) {
+            for (size_t i = 0; i < env->count; i++) {
+                free_token(env->variables[i].token);
+                free(env->variables[i].name);
+            }
+        }
+        free(env->variables);
+        free(env);
+    }
+}

@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
         int passed = 0;
         int failed = 0;
         int test_num = 0;
+        Environment *env = calloc(1, sizeof(Environment));
 
         while (fgets(line, sizeof(line), scm)) {
             if (line[0] == ';' || line[0] == '\n') {continue;}
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
 
             TokenArray *tokens = tokenize(line);
             Nest *nest_ptr = parse(tokens);
-            Token *result = evaluate(nest_ptr);
+            Token *result = evaluate(nest_ptr, env);
 
             test_num++;
             if (strcmp(result->str, expected) == 0) {
@@ -48,6 +49,7 @@ int main(int argc, char *argv[]) {
             free_token_arr(tokens);
             free_token(result);
         }
+        free_env(env);
 
         printf("Passed: %d\n", passed);
         printf("Failed: %d\n", failed);
@@ -61,20 +63,23 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         char line[MAX_LENGTH];
+        Environment *env = calloc(1, sizeof(Environment));
         while (fgets(line, sizeof(line), f)) {
             if (line[0] == ';' || line[0] == '\n') continue;
             TokenArray *tokens = tokenize(line);
             Nest *nest_ptr = parse(tokens);
-            Token *result = evaluate(nest_ptr);
+            Token *result = evaluate(nest_ptr, env);
             printf("%s\n", result->str);
             free_nest(nest_ptr); // free nest first, since it points into tokens
             free_token_arr(tokens);
             free_token(result);
         }
         fclose(f);
+        free_env(env);
 
     } else { // use stdin
         char input[MAX_LENGTH];
+        Environment *env = calloc(1, sizeof(Environment));
         while (1) {
             printf("> ");
             if (fgets(input, MAX_LENGTH, stdin) == NULL) { // Ctrl+D
@@ -84,12 +89,13 @@ int main(int argc, char *argv[]) {
             if (input[0] == '\n') continue;
             TokenArray *tokens = tokenize(input);
             Nest *nest_ptr = parse(tokens);
-            Token *result = evaluate(nest_ptr);
+            Token *result = evaluate(nest_ptr, env);
             printf("%s\n", result->str);
             free_nest(nest_ptr); // free nest first, since it points into tokens
             free_token_arr(tokens);
             free_token(result);
         }
+        free_env(env);
     }
 
     return 0;

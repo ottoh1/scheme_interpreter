@@ -57,13 +57,31 @@ struct Nest {
 
 Nest* parse(const TokenArray *token_arr);
 
+// environment
+
+typedef enum {
+    TOKEN
+} VariableType;
+
+typedef struct {
+    Token *token;
+    char *name;
+    VariableType type;
+} Variable;
+
+typedef struct {
+    Variable *variables;
+    size_t count;
+} Environment;
+
 // eval
 
-Token* evaluate(Nest *nest);
+Token* evaluate(Nest *nest, Environment *env);
 
 // free
 void free_token(Token *token);
 void free_token_arr(TokenArray *token_arr);
 void free_nest(Nest *nest);
+void free_env(Environment *env);
 
 #endif
