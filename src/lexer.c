@@ -15,6 +15,7 @@ TokenArray *tokenize(const char *input) {
     int token_num = 0;
 
     TokenType last_type = INVALID;
+    char last_char;
     int running_len = 0;
     char * str_ptr = NULL;
 
@@ -46,7 +47,7 @@ TokenArray *tokenize(const char *input) {
         }
 
         if (current_token.type == NUM || current_token.type == SYM) {
-            if (current_token.type == last_type) {
+            if (current_token.type == last_type || (last_type == NUM && current_c == '.') || (last_char == '.' && current_token.type == NUM)) {
                 running_len++;
                 str_ptr = realloc(str_ptr, (running_len + 1) * sizeof(char));
                 str_ptr[running_len - 1] = current_c;
@@ -71,6 +72,7 @@ TokenArray *tokenize(const char *input) {
         }
 
         last_type = current_token.type;
+        last_char = current_c;
     }
 
     arr->tokens = tokens_ptr;

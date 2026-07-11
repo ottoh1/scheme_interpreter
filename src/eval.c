@@ -49,17 +49,17 @@ Token * evaluate(Nest *nest, Environment *env) {
 
         for (size_t i = 0; i < nest->data_array->count; i++) {
             if (i == 0) {
-                result = (float) atoi(nest->data_array->data[i].token->str);
+                result = atof(nest->data_array->data[i].token->str);
                 continue;
             }
             if (strcmp(nest->op_symb->str, "+") == 0) {
-                result = (float) result + atoi(nest->data_array->data[i].token->str);
+                result = result + atof(nest->data_array->data[i].token->str);
             } else if (strcmp(nest->op_symb->str, "-") == 0) {
-                result = (float) result - atoi(nest->data_array->data[i].token->str);
+                result = result - atof(nest->data_array->data[i].token->str);
             } else if (strcmp(nest->op_symb->str, "*") == 0) {
-                result = (float) result * atoi(nest->data_array->data[i].token->str);
+                result = result * atof(nest->data_array->data[i].token->str);
             } else if (strcmp(nest->op_symb->str, "/") == 0) {
-                result = (float) result / atoi(nest->data_array->data[i].token->str);
+                result = result / atof(nest->data_array->data[i].token->str);
             }
         }
 
@@ -68,34 +68,34 @@ Token * evaluate(Nest *nest, Environment *env) {
         return_token->type = NUM;
 
     } else if (str_in(nest->op_symb->str, comparison_ops, 5) != 0) { // COMPARISON
-        int result = 1;
+        float result = 1;
         for (size_t i = 0; i < (nest->data_array->count - 1); i++) {
             if (strcmp(nest->op_symb->str, "=") == 0) {
-                if (result && (atoi(nest->data_array->data[i].token->str) == atoi(nest->data_array->data[i+1].token->str))) {
+                if (result && (atof(nest->data_array->data[i].token->str) == atof(nest->data_array->data[i+1].token->str))) {
                     result = 1;
                 } else {
                     result = 0;
                 }
             } else if (strcmp(nest->op_symb->str, "<") == 0) {
-                if (result && (atoi(nest->data_array->data[i].token->str) < atoi(nest->data_array->data[i+1].token->str))) {
+                if (result && (atof(nest->data_array->data[i].token->str) < atof(nest->data_array->data[i+1].token->str))) {
                     result = 1;
                 } else {
                     result = 0;
                 }
             } else if (strcmp(nest->op_symb->str, ">") == 0) {
-                if (result && (atoi(nest->data_array->data[i].token->str) > atoi(nest->data_array->data[i+1].token->str))) {
+                if (result && (atof(nest->data_array->data[i].token->str) > atof(nest->data_array->data[i+1].token->str))) {
                     result = 1;
                 } else {
                     result = 0;
                 }
             } else if (strcmp(nest->op_symb->str, "<=") == 0) {
-                if (result && (atoi(nest->data_array->data[i].token->str) <= atoi(nest->data_array->data[i+1].token->str))) {
+                if (result && (atof(nest->data_array->data[i].token->str) <= atof(nest->data_array->data[i+1].token->str))) {
                     result = 1;
                 } else {
                     result = 0;
                 }
             } else if (strcmp(nest->op_symb->str, ">=") == 0) {
-                if (result && (atoi(nest->data_array->data[i].token->str) >= atoi(nest->data_array->data[i+1].token->str))) {
+                if (result && (atof(nest->data_array->data[i].token->str) >= atof(nest->data_array->data[i+1].token->str))) {
                     result = 1;
                 } else {
                     result = 0;
@@ -112,16 +112,16 @@ Token * evaluate(Nest *nest, Environment *env) {
             return_token->type = SYM;
         }
     } else if(strcmp(nest->op_symb->str, "if") == 0) { // IF
-        int result;
+        float result;
         if (strcmp(nest->data_array->data[0].token->str, "#t") == 0) {
-            result = atoi(nest->data_array->data[1].token->str); // get 2nd element if true
+            result = atof(nest->data_array->data[1].token->str); // get 2nd element if true
         } else if (strcmp(nest->data_array->data[0].token->str, "#f") == 0) {
-            result = atoi(nest->data_array->data[2].token->str); // get 3rd element if false
+            result = atof(nest->data_array->data[2].token->str); // get 3rd element if false
         } else {
             printf("Excepted boolean after 'if'\n");
             exit(1);
         }
-        snprintf(return_str, 64, "%d", result);
+        snprintf(return_str, 64, "%.3g", result);
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = NUM;
     } else if(strcmp(nest->op_symb->str, "and") == 0) { // AND
