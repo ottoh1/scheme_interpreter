@@ -15,7 +15,7 @@ TokenArray *tokenize(const char *input) {
     int token_num = 0;
 
     TokenType last_type = INVALID;
-    char last_char;
+    char last_char = '\0';
     int running_len = 0;
     char * str_ptr = NULL;
 
