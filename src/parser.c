@@ -40,7 +40,7 @@ Nest *parse(const TokenArray *token_arr) {
 
                 exp_next = DATA_OR_END;
             } else if (exp_next == OP) {
-                printf("Syntax error: expected an operator after '(', found another '('\n");
+                printf("Unxpected '('\n");
                 longjmp(repl_recover, 1);
             }
         } else if (token.type == SYM) {
@@ -58,7 +58,7 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->op_symb = &token_arr->tokens[i];
                 exp_next = END;
             } else {
-                printf("Syntax error: unexpected symbol '%s'\n", token.str);
+                printf("Unexpected symbol: '%s'\n", token.str);
                 longjmp(repl_recover, 1);
             }
         } else if (token.type == NUM) {
@@ -73,7 +73,7 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->op_symb = &token_arr->tokens[i];
                 exp_next = END;
             } else {
-                printf("Syntax error: unexpected number '%s'\n", token.str);
+                printf("Unexpected number: '%s'\n", token.str);
                 longjmp(repl_recover, 1);
             }
         } else if (token.type == RPAR) {
@@ -81,7 +81,7 @@ Nest *parse(const TokenArray *token_arr) {
                 nest->tokens_covered++;
                 return nest;
             } else if (exp_next == START || exp_next == OP || exp_next == DATA) {
-                printf("Syntax error: unexpected ')' — expression is incomplete\n");
+                printf("Unexpected ')' — expression is incomplete\n");
                 longjmp(repl_recover, 1);
             }
         }
