@@ -45,6 +45,7 @@ void free_data_array(DataArray *data_array) {
 
 void free_nest(Nest *nest) {
     if (nest != NULL) {
+        free_token(nest->op_symb);
         free_data_array(nest->data_array);
         free(nest);
     }
@@ -54,7 +55,12 @@ void free_env(Environment *env) {
     if (env != NULL) {
         if (env->variables != NULL) {
             for (size_t i = 0; i < env->count; i++) {
-                free_token(env->variables[i].token);
+                if (env->variables[i].type == LAMBDA) {
+                    free_nest(env->variables[i].lambda_params);
+                    free_nest(env->variables[i].lambda_body);
+                } else if (env->variables[i].type == TOKEN) {
+                    free_token(env->variables[i].token);
+                }
                 free(env->variables[i].name);
             }
         }

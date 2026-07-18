@@ -8,14 +8,19 @@ typedef enum {
     RPAR,
     NUM,
     SYM,
+    LAMBDA_MARKER,
     END_OF_FILE,
     INVALID
 } TokenType;
+
+typedef struct Nest Nest;
 
 typedef struct {
     TokenType type;
     char *str;
     int new_token; // 1 = malloc'd sperately. 0 = points into token array
+    Nest *lambda_params;
+    Nest *lambda_body;
 } Token;
 
 typedef struct {
@@ -35,7 +40,6 @@ typedef enum {
     END
 } Arg;
 
-typedef struct Nest Nest;
 typedef struct Data Data;
 typedef struct DataArray DataArray;
 
@@ -61,19 +65,30 @@ Nest* parse(const TokenArray *token_arr);
 // environment
 
 typedef enum {
-    TOKEN
+    TOKEN,
+    LAMBDA
 } VariableType;
 
 typedef struct {
     Token *token;
     char *name;
     VariableType type;
+    Nest *lambda_params;
+    Nest *lambda_body;
 } Variable;
 
-typedef struct {
+typedef struct Environment Environment;
+
+struct Environment {
     Variable *variables;
+    Environment *parent;
     size_t count;
-} Environment;
+};
+
+Environment *build_environment(Environment *parent);
+Variable *lookup_variable(Environment *env, char *name);
+
+Nest *copy_nest(const Nest *src);
 
 // eval
 

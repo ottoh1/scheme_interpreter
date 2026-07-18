@@ -99,3 +99,49 @@ pi
 #f
 (define z 7)
 z
+
+(define sq (lambda (x) (* x x)))
+(sq 2)
+(sq 5)
+(sq 10)
+
+(define add-both (lambda (x y) (+ x y)))
+(add-both 3 4)
+(add-both 10 20)
+
+(define avg-three (lambda (a b c) (/ (+ a b c) 3)))
+(avg-three 1 2 3)
+(avg-three 10 20 30)
+
+(define n 10)
+(define add-n (lambda (x) (+ x n)))
+(add-n 5)
+(add-n 0)
+
+(define w 100)
+(define shadow-test (lambda (w) (* w 2)))
+(shadow-test 3)
+w
+
+(define dbl (lambda (x) (* x 2)))
+(define quad (lambda (x) (dbl (dbl x))))
+(quad 5)
+(quad 1)
+
+(sq (+ 1 2))
+(dbl (sq 3))
+
+(define abs-val (lambda (x) (if (< x 0) (- 0 x) x)))
+(abs-val 5)
+(abs-val (- 0 7))
+
+(define fact (lambda (m) (if (= m 0) 1 (* m (fact (- m 1))))))
+(fact 0)
+(fact 1)
+(fact 5)
+
+(define fib (lambda (k) (if (< k 2) k (+ (fib (- k 1)) (fib (- k 2))))))
+(fib 0)
+(fib 1)
+(fib 6)
+(fib 10)

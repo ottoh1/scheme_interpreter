@@ -23,6 +23,7 @@ TokenArray *tokenize(const char *input) {
 
         char current_c = input[i];
         Token current_token;
+        memset(&current_token, 0, sizeof(Token)); // zeros token
 
         current_token.type = INVALID;
         switch (current_c) {
