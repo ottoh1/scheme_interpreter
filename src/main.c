@@ -4,6 +4,8 @@
 
 #include "defs.h"
 
+jmp_buf repl_recover;
+
 #define MAX_LENGTH 1024
 
 int main(int argc, char *argv[]) {
@@ -30,7 +32,15 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
-            expected[strcspn(expected, "\n")] = '\0'; // remove newline characters
+            expected[strcspn(expected, "\n")] = '\0';
+
+            if (setjmp(repl_recover) != 0) {
+                // evaluation error — count as a failed test, move on
+                test_num++;
+                failed++;
+                printf("Failed test %d (error): %s", test_num, line);
+                continue;
+            }
 
             TokenArray *tokens = tokenize(line);
             Nest *nest_ptr = parse(tokens);
@@ -45,7 +55,7 @@ int main(int argc, char *argv[]) {
                 printf("expected: %s\n", expected);
                 printf("actual: %s\n", result->str);
             }
-            free_nest(nest_ptr); // free nest first, since it points into tokens
+            free_nest(nest_ptr);
             free_token_arr(tokens);
             free_token(result);
         }
@@ -66,18 +76,23 @@ int main(int argc, char *argv[]) {
         Environment *env = calloc(1, sizeof(Environment));
         while (fgets(line, sizeof(line), f)) {
             if (line[0] == ';' || line[0] == '\n') continue;
+
+            if (setjmp(repl_recover) != 0) {
+                continue; // error already printed by the thrower; skip to next line
+            }
+
             TokenArray *tokens = tokenize(line);
             Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr, env);
             printf("%s\n", result->str);
-            free_nest(nest_ptr); // free nest first, since it points into tokens
+            free_nest(nest_ptr);
             free_token_arr(tokens);
             free_token(result);
         }
         fclose(f);
         free_env(env);
 
-    } else { // use stdin
+    } else { // REPL
         char input[MAX_LENGTH];
         Environment *env = calloc(1, sizeof(Environment));
         while (1) {
@@ -87,11 +102,16 @@ int main(int argc, char *argv[]) {
                 break;
             }
             if (input[0] == '\n') continue;
+
+            if (setjmp(repl_recover) != 0) {
+                continue; // error already printed; back to prompt
+            }
+
             TokenArray *tokens = tokenize(input);
             Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr, env);
             printf("%s\n", result->str);
-            free_nest(nest_ptr); // free nest first, since it points into tokens
+            free_nest(nest_ptr);
             free_token_arr(tokens);
             free_token(result);
         }

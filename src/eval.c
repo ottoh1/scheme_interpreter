@@ -292,8 +292,8 @@ Token * evaluate(Nest *nest, Environment *env) {
             return_token->type = SYM;
         }
     } else {
-        printf("Uknown OP\n");
-        exit(1);
+        printf("Runtime error: unknown operator '%s'\n", nest->op_symb->str);
+        longjmp(repl_recover, 1);
     }
 
     return_token->str = return_str;

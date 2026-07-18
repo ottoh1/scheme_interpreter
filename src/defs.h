@@ -1,6 +1,10 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+#include <setjmp.h>
+
+extern jmp_buf repl_recover;
+
 // lexer
 
 typedef enum {
