@@ -110,6 +110,8 @@ Token * evaluate(Nest *nest, Environment *env) {
     char *return_str = malloc(64 * sizeof(char));
     Token *return_token = malloc(sizeof(Token));
     return_token->new_token = 1;
+    return_token->lambda_params = NULL;
+    return_token->lambda_body = NULL;
 
     if (str_in(nest->op_symb->str, arithmetic_ops, 4) != 0) { // ARITHMETIC
         float result;
@@ -236,6 +238,10 @@ Token * evaluate(Nest *nest, Environment *env) {
             strcpy(env->variables[env->count - 1].name, variable_name);
 
             if (nest->data_array->data[1].token->type == LAMBDA_MARKER) {
+                if (nest->data_array->data[1].token->lambda_body == NULL) {
+                    printf("Error: defining a lambda returned from a function call is not supported\n");
+                    longjmp(repl_recover, 1);
+                }
                 env->variables[env->count - 1].type = LAMBDA;
                 env->variables[env->count - 1].token = NULL;
                 env->variables[env->count - 1].lambda_params = copy_nest(nest->data_array->data[1].token->lambda_params);

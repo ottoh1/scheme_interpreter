@@ -87,7 +87,11 @@ int main(int argc, char *argv[]) {
             TokenArray *tokens = tokenize(expr);
             Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr, env);
-            printf("%s\n", result->str);
+
+            if (!(strcmp(nest_ptr->op_symb->str, "define") == 0)) { // skip printing for defines
+                printf("%s\n", result->str);
+            }
+
             free_nest(nest_ptr);
             free_token_arr(tokens);
             free_token(result);
