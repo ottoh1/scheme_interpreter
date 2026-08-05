@@ -17,6 +17,11 @@ int str_in(const char *str, const char **list, size_t count) {
 
 Token * evaluate(Nest *nest, Environment *env) {
     if (strcmp(nest->op_symb->str, "lambda") == 0) {
+        if (nest->data_array->count < 2) {
+            printf("Syntax Error: lambda requires parameters and a body\n");
+            longjmp(repl_recover, 1);
+        }
+
         Token *tkn = malloc(sizeof(Token));
         tkn->type = LAMBDA_MARKER;
         char *temp = "lambda";
@@ -29,6 +34,10 @@ Token * evaluate(Nest *nest, Environment *env) {
     }
 
     if (strcmp(nest->op_symb->str, "if") == 0) { // only evalue the correct nest
+        if (nest->data_array->count < 3) {
+            printf("Syntax Error: if requires condition, true case, and false case\n");
+            longjmp(repl_recover, 1);
+        }
         // evaluate the condition
         Token *cond;
         if (nest->data_array->data[0].nest_ptr != NULL) {
@@ -82,7 +91,7 @@ Token * evaluate(Nest *nest, Environment *env) {
     // set variables
     for (size_t i = 0; i < nest->data_array->count; i++) {
         if (strcmp(nest->op_symb->str, "define") == 0) {break;}
-        if (nest->data_array->data[i].token->type == SYM) {
+        if (nest->data_array->data[i].token->type == SYM && strcmp(nest->data_array->data[i].token->str, "#t") != 0 && strcmp(nest->data_array->data[i].token->str, "#f") != 0) {
             Variable *v = lookup_variable(env, nest->data_array->data[i].token->str);
             if (v != NULL && v->type == TOKEN) {
                 free_token(nest->data_array->data[i].token);
@@ -91,6 +100,9 @@ Token * evaluate(Nest *nest, Environment *env) {
                 nest->data_array->data[i].token->str = malloc(sizeof(char) * (strlen(v->token->str) + 1));
                 strcpy(nest->data_array->data[i].token->str, v->token->str);
                 nest->data_array->data[i].token->new_token = 1;
+            } else if (v == NULL) {
+                printf("Error: unkown symbol '%s'\n", nest->data_array->data[i].token->str);
+                longjmp(repl_recover, 1);
             }
         }
     }
@@ -118,7 +130,7 @@ Token * evaluate(Nest *nest, Environment *env) {
             }
         }
 
-        snprintf(return_str, 64, "%.3g", result);
+        snprintf(return_str, 64, "%.6g", result);
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = NUM;
 
@@ -191,6 +203,10 @@ Token * evaluate(Nest *nest, Environment *env) {
         return_str = realloc(return_str, sizeof(char) * (strlen(return_str) + 1));
         return_token->type = SYM;
     } else if(strcmp(nest->op_symb->str, "define") == 0) { // DEFINE VARIABLE
+        if (nest->data_array->count < 2) {
+            printf("Syntax Error: define requires variable name and value\n");
+            longjmp(repl_recover, 1);
+        }
         char variable_name[64] = {0};
         strcpy(variable_name, nest->data_array->data[0].token->str);
         int found = 0;
@@ -253,6 +269,13 @@ Token * evaluate(Nest *nest, Environment *env) {
             Environment *call_env = build_environment(env); // create env just for this execution
 
             size_t nparams = var->lambda_params->data_array->count + 1;
+
+            if (nest->data_array->count != nparams) {
+                printf("Error: '%s' expects %zu argument(s), got %zu\n", nest->op_symb->str, nparams, nest->data_array->count);
+                free_env(call_env);
+                longjmp(repl_recover, 1);
+            }
+
             call_env->variables = malloc(nparams * sizeof(Variable));
             call_env->count = nparams;
 
@@ -286,10 +309,13 @@ Token * evaluate(Nest *nest, Environment *env) {
             strcpy(return_str, var->token->str);
             return_str = realloc(return_str, strlen(return_str) + 1);
             return_token->type = var->token->type;
-        } else { // just return the variable (couldn't find value)
+        } else if (strcmp(nest->op_symb->str, "#t") == 0 || strcmp(nest->op_symb->str, "#f") == 0) {
             strcpy(return_str, nest->op_symb->str);
             return_str = realloc(return_str, strlen(return_str) + 1);
             return_token->type = SYM;
+        } else { // couldn't find var
+            printf("Error: unkown symbol '%s'\n", nest->op_symb->str);
+            longjmp(repl_recover, 1);
         }
     } else {
         printf("Unknown: '%s'\n", nest->op_symb->str);
