@@ -6,7 +6,9 @@
 
 jmp_buf repl_recover;
 
-#define MAX_LENGTH 1024
+#define MAX_LENGTH 4096
+
+int read_expression(FILE *f, char *expr, size_t expr_size);
 
 int main(int argc, char *argv[]) {
     if (argc == 4 && strcmp(argv[1], "--test") == 0) { // ./scheme --test tests.scm tests.expected
@@ -17,15 +19,23 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
-        char line[MAX_LENGTH];
+        char expr[MAX_LENGTH];
         char expected[MAX_LENGTH];
         int passed = 0;
         int failed = 0;
         int test_num = 0;
         Environment *env = calloc(1, sizeof(Environment));
 
-        while (fgets(line, sizeof(line), scm)) {
-            if (line[0] == ';' || line[0] == '\n') {continue;}
+        while (1) {
+            if (setjmp(repl_recover) != 0) {
+                // evaluation error — count as a failed test, move on
+                test_num++;
+                failed++;
+                printf("Failed test %d (error): %s", test_num, expr);
+                continue;
+            }
+
+            if (!read_expression(scm, expr, sizeof(expr))) break;
 
             if (fgets(expected, sizeof(expected), exp) == NULL) {
                 printf("Expected file ran out of lines\n");
@@ -34,15 +44,7 @@ int main(int argc, char *argv[]) {
 
             expected[strcspn(expected, "\n")] = '\0';
 
-            if (setjmp(repl_recover) != 0) {
-                // evaluation error — count as a failed test, move on
-                test_num++;
-                failed++;
-                printf("Failed test %d (error): %s", test_num, line);
-                continue;
-            }
-
-            TokenArray *tokens = tokenize(line);
+            TokenArray *tokens = tokenize(expr);
             Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr, env);
 
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]) {
                 passed++;
             } else {
                 failed++;
-                printf("Failed test %d: %s", test_num, line);
+                printf("Failed test %d: %s", test_num, expr);
                 printf("expected: %s\n", expected);
                 printf("actual: %s\n", result->str);
             }
@@ -72,16 +74,17 @@ int main(int argc, char *argv[]) {
             printf("Could not open file: %s\n", argv[1]);
             exit(1);
         }
-        char line[MAX_LENGTH];
+        char expr[MAX_LENGTH];
         Environment *env = calloc(1, sizeof(Environment));
-        while (fgets(line, sizeof(line), f)) {
-            if (line[0] == ';' || line[0] == '\n') continue;
+        while (1) {
 
             if (setjmp(repl_recover) != 0) {
                 continue; // error already printed by the thrower; skip to next line
             }
 
-            TokenArray *tokens = tokenize(line);
+            if (!read_expression(f, expr, sizeof(expr))) break;
+
+            TokenArray *tokens = tokenize(expr);
             Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr, env);
             printf("%s\n", result->str);
@@ -93,21 +96,21 @@ int main(int argc, char *argv[]) {
         free_env(env);
 
     } else { // REPL
-        char input[MAX_LENGTH];
+        char expr[MAX_LENGTH];
         Environment *env = calloc(1, sizeof(Environment));
+
         while (1) {
             printf("> ");
-            if (fgets(input, MAX_LENGTH, stdin) == NULL) { // Ctrl+D
+            if (setjmp(repl_recover) != 0) {
+                continue;
+            }
+
+            if (!read_expression(stdin, expr, sizeof(expr))) {
                 printf("\n");
                 break;
             }
-            if (input[0] == '\n') continue;
 
-            if (setjmp(repl_recover) != 0) {
-                continue; // error already printed; back to prompt
-            }
-
-            TokenArray *tokens = tokenize(input);
+            TokenArray *tokens = tokenize(expr);
             Nest *nest_ptr = parse(tokens);
             Token *result = evaluate(nest_ptr, env);
             printf("%s\n", result->str);
@@ -119,4 +122,38 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
+}
+
+// Reads lines from file until parentheses close completely
+int read_expression(FILE *f, char *expr, size_t expr_size) {
+    char line[MAX_LENGTH / 4];
+    int current_nest = 0;
+    expr[0] = '\0';
+
+    while (fgets(line, sizeof(line), f)) {
+        if (current_nest == 0 && (line[0] == ';' || line[0] == '\n')) {
+            continue; // skip comments and empty lines if mid-expression
+        }
+
+        if (strlen(expr) + strlen(line) >= expr_size) {
+            printf("Error: expression too long\n");
+            longjmp(repl_recover, 1);
+        }
+        strcat(expr, line);
+
+        for (char *c = line; *c != '\0'; c++) { // update current_nest based on '(' and ')'
+            if (*c == '(') current_nest++;
+            if (*c == ')') current_nest--;
+        }
+
+        if (current_nest < 0) { // too many ')'
+            printf("Syntax Error: unexpected ')'\n");
+            longjmp(repl_recover, 1);
+        }
+        if (current_nest == 0 && strlen(expr) > 0) {
+            return 1;
+        }
+    }
+
+    return 0; // EOF
 }

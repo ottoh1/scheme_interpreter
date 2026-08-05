@@ -145,3 +145,41 @@ w
 (fib 1)
 (fib 6)
 (fib 10)
+
+; multi-line reading tests
+(define
+  ml-square
+  (lambda (x) (* x x)))
+(ml-square 6)
+
+(define ml-add
+  (lambda (a b c)
+    (+ a b c)))
+(ml-add 1 2 3)
+
+(define
+  ml-fact
+  (lambda (n)
+    (if (= n 0)
+        1
+        (* n (ml-fact (- n 1))))))
+(ml-fact 5)
+
+(define ml-nested
+  (lambda (a b c d)
+    (+
+      (* a b)
+      (- c
+         d))))
+(ml-nested 2 3 10 4)
+
+(define ml-classify
+  (lambda (x)
+    (if (< x 0)
+        (- 0 1)
+        (if (= x 0)
+            0
+            1))))
+(ml-classify (- 0 5))
+(ml-classify 0)
+(ml-classify 5)
